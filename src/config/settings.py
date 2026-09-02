@@ -41,7 +41,9 @@ class Settings(BaseSettings):
 
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = Field(default=10, description="Maximum upload size in MB")
-    ALLOWED_EXTENSIONS: list[str] = Field(default=["pdf", "png", "jpg", "jpeg"], description="Allowed file extensions")
+    ALLOWED_EXTENSIONS: list[str] = Field(
+        default=["pdf", "png", "jpg", "jpeg"], description="Allowed file extensions"
+    )
 
     # Fraud Detection Thresholds
     FRAUD_SCORE_THRESHOLD: float = Field(default=0.7, description="Fraud detection threshold")

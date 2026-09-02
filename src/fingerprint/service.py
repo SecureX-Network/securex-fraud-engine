@@ -15,7 +15,11 @@ class FingerprintService:
     Python's hashlib module.
     """
 
-    SUPPORTED_ALGORITHMS = {"sha256": hashlib.sha256, "sha384": hashlib.sha384, "sha512": hashlib.sha512}
+    SUPPORTED_ALGORITHMS = {
+        "sha256": hashlib.sha256,
+        "sha384": hashlib.sha384,
+        "sha512": hashlib.sha512,
+    }
 
     def create(self, credential_data: dict[str, Any], algorithm: str = "sha256") -> str:
         """Create a deterministic fingerprint from credential data."""
@@ -29,7 +33,9 @@ class FingerprintService:
         hash_fn = self.SUPPORTED_ALGORITHMS[algorithm]
         return hash_fn(serialized.encode("utf-8")).hexdigest()
 
-    def verify(self, credential_data: dict[str, Any], expected: str, algorithm: str = "sha256") -> bool:
+    def verify(
+        self, credential_data: dict[str, Any], expected: str, algorithm: str = "sha256"
+    ) -> bool:
         """Verify credential data against an expected fingerprint."""
         computed = self.create(credential_data, algorithm)
         return self._constant_time_compare(computed, expected)

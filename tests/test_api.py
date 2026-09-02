@@ -3,7 +3,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 from fastapi.testclient import TestClient
@@ -29,12 +29,15 @@ def test_health_endpoint(client):
 
 def test_fraud_analyze_valid(client):
     """Test fraud analysis with valid data."""
-    response = client.post("/api/v1/fraud/analyze", json={
-        "credential_id": "cred-1",
-        "credential_type": "degree",
-        "issuer_id": "issuer-u1",
-        "metadata": {"issuer_reputation": 0.9},
-    })
+    response = client.post(
+        "/api/v1/fraud/analyze",
+        json={
+            "credential_id": "cred-1",
+            "credential_type": "degree",
+            "issuer_id": "issuer-u1",
+            "metadata": {"issuer_reputation": 0.9},
+        },
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -46,9 +49,12 @@ def test_fraud_analyze_valid(client):
 
 def test_fraud_analyze_validation_error(client):
     """Test fraud analysis with missing required fields."""
-    response = client.post("/api/v1/fraud/analyze", json={
-        "credential_type": "degree",
-    })
+    response = client.post(
+        "/api/v1/fraud/analyze",
+        json={
+            "credential_type": "degree",
+        },
+    )
 
     assert response.status_code == 422
     assert "detail" in response.json()
@@ -56,11 +62,14 @@ def test_fraud_analyze_validation_error(client):
 
 def test_risk_score_valid(client):
     """Test risk scoring endpoint."""
-    response = client.post("/api/v1/risk/score", json={
-        "entity_type": "credential",
-        "entity_id": "cred-1",
-        "context": {"entity_age_days": 30},
-    })
+    response = client.post(
+        "/api/v1/risk/score",
+        json={
+            "entity_type": "credential",
+            "entity_id": "cred-1",
+            "context": {"entity_age_days": 30},
+        },
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -71,10 +80,13 @@ def test_risk_score_valid(client):
 
 def test_fingerprint_create(client):
     """Test fingerprint creation endpoint."""
-    response = client.post("/api/v1/fingerprint/create", json={
-        "credential_id": "cred-1",
-        "credential_data": {"name": "Test", "id": "123"},
-    })
+    response = client.post(
+        "/api/v1/fingerprint/create",
+        json={
+            "credential_id": "cred-1",
+            "credential_data": {"name": "Test", "id": "123"},
+        },
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -84,17 +96,23 @@ def test_fingerprint_create(client):
 
 def test_fingerprint_verify_match(client):
     """Test fingerprint verification with matching data."""
-    create_resp = client.post("/api/v1/fingerprint/create", json={
-        "credential_id": "cred-2",
-        "credential_data": {"name": "Savan", "id": "456"},
-    })
+    create_resp = client.post(
+        "/api/v1/fingerprint/create",
+        json={
+            "credential_id": "cred-2",
+            "credential_data": {"name": "Savan", "id": "456"},
+        },
+    )
     fingerprint = create_resp.json()["fingerprint"]
 
-    verify_resp = client.post("/api/v1/fingerprint/verify", json={
-        "credential_id": "cred-2",
-        "credential_data": {"name": "Savan", "id": "456"},
-        "expected_fingerprint": fingerprint,
-    })
+    verify_resp = client.post(
+        "/api/v1/fingerprint/verify",
+        json={
+            "credential_id": "cred-2",
+            "credential_data": {"name": "Savan", "id": "456"},
+            "expected_fingerprint": fingerprint,
+        },
+    )
 
     assert verify_resp.status_code == 200
     assert verify_resp.json()["is_valid"] is True
@@ -102,12 +120,15 @@ def test_fingerprint_verify_match(client):
 
 def test_tampering_analyze(client):
     """Test tampering analysis endpoint."""
-    response = client.post("/api/v1/tampering/analyze", json={
-        "document_id": "doc-1",
-        "document_type": "pdf",
-        "document_hash": "abc",
-        "content_hash": "def",
-    })
+    response = client.post(
+        "/api/v1/tampering/analyze",
+        json={
+            "document_id": "doc-1",
+            "document_type": "pdf",
+            "document_hash": "abc",
+            "content_hash": "def",
+        },
+    )
 
     assert response.status_code == 200
     data = response.json()

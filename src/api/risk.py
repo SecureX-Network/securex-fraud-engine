@@ -18,12 +18,8 @@ class RiskAnalysisRequest(BaseModel):
 
     entity_type: str = Field(..., description="Entity type (credential, issuer, holder)")
     entity_id: str = Field(..., description="Entity identifier")
-    context: dict[str, Any] | None = Field(
-        default_factory=dict, description="Analysis context"
-    )
-    signals: list[dict[str, Any]] | None = Field(
-        default_factory=list, description="Input signals"
-    )
+    context: dict[str, Any] | None = Field(default_factory=dict, description="Analysis context")
+    signals: list[dict[str, Any]] | None = Field(default_factory=list, description="Input signals")
 
 
 class RiskFactorResponse(BaseModel):

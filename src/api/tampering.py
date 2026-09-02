@@ -18,12 +18,8 @@ class TamperingAnalysisRequest(BaseModel):
 
     document_id: str = Field(..., description="Document identifier")
     document_type: str = Field(..., description="Document type (pdf, image, etc.)")
-    document_hash: str | None = Field(
-        None, description="Known document hash for comparison"
-    )
-    metadata: dict[str, Any] | None = Field(
-        default_factory=dict, description="Document metadata"
-    )
+    document_hash: str | None = Field(None, description="Known document hash for comparison")
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Document metadata")
     content_hash: str | None = Field(None, description="Content hash for integrity check")
 
 

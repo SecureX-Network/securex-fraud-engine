@@ -11,6 +11,7 @@ SEVERITY_WEIGHT = {"critical": 0.9, "high": 0.7, "medium": 0.55, "low": 0.3}
 @dataclass
 class TamperingContext:
     """Context for tampering analysis."""
+
     document_id: str
     document_type: str
     document_hash: str | None = None
@@ -61,32 +62,38 @@ class TamperingDetectionService:
         # Hash comparison
         if context.document_hash and context.content_hash:
             if context.document_hash != context.content_hash:
-                indicators.append(TamperingIndicator(
-                    type="hash_mismatch",
-                    confidence=0.95,
-                    description="Document hash does not match expected value",
-                    severity="critical",
-                ))
+                indicators.append(
+                    TamperingIndicator(
+                        type="hash_mismatch",
+                        confidence=0.95,
+                        description="Document hash does not match expected value",
+                        severity="critical",
+                    )
+                )
 
         # Metadata analysis
         suspicious_fields = ["modified", "altered", "tampered"]
         for field in suspicious_fields:
             if field in context.metadata:
-                indicators.append(TamperingIndicator(
-                    type="suspicious_metadata",
-                    confidence=0.8,
-                    description=f"Suspicious metadata field detected: {field}",
-                    severity="high",
-                ))
+                indicators.append(
+                    TamperingIndicator(
+                        type="suspicious_metadata",
+                        confidence=0.8,
+                        description=f"Suspicious metadata field detected: {field}",
+                        severity="high",
+                    )
+                )
 
         # Document type validation
         if context.document_type not in self.ALLOWED_DOCUMENT_TYPES:
-            indicators.append(TamperingIndicator(
-                type="unusual_document_type",
-                confidence=0.5,
-                description=f"Unusual document type: {context.document_type}",
-                severity="low",
-            ))
+            indicators.append(
+                TamperingIndicator(
+                    type="unusual_document_type",
+                    confidence=0.5,
+                    description=f"Unusual document type: {context.document_type}",
+                    severity="low",
+                )
+            )
 
         return indicators
 

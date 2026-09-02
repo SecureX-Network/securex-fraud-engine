@@ -20,9 +20,7 @@ class FraudAnalysisRequest(BaseModel):
     credential_type: str = Field(..., description="Type of credential")
     issuer_id: str = Field(..., description="Issuer identifier")
     holder_id: str | None = Field(None, description="Credential holder identifier")
-    metadata: dict[str, Any] | None = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Additional metadata")
     fingerprints: list[str] | None = Field(
         default_factory=list, description="Credential fingerprints"
     )

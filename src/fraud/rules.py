@@ -32,27 +32,31 @@ class FraudRuleEngine:
         if "issuer_reputation" in metadata:
             reputation = metadata["issuer_reputation"]
             if reputation < 0.3:
-                signals.append(FraudSignal(
-                    type="low_issuer_reputation",
-                    confidence=0.8,
-                    description=f"Issuer reputation is low: {reputation}",
-                    severity="high",
-                    data={"reputation": reputation},
-                ))
+                signals.append(
+                    FraudSignal(
+                        type="low_issuer_reputation",
+                        confidence=0.8,
+                        description=f"Issuer reputation is low: {reputation}",
+                        severity="high",
+                        data={"reputation": reputation},
+                    )
+                )
 
         # Check for mismatched issuer data
         if "expected_issuer" in metadata and "actual_issuer" in metadata:
             if metadata["expected_issuer"] != metadata["actual_issuer"]:
-                signals.append(FraudSignal(
-                    type="issuer_mismatch",
-                    confidence=0.9,
-                    description="Issuer does not match expected value",
-                    severity="high",
-                    data={
-                        "expected": metadata["expected_issuer"],
-                        "actual": metadata["actual_issuer"],
-                    },
-                ))
+                signals.append(
+                    FraudSignal(
+                        type="issuer_mismatch",
+                        confidence=0.9,
+                        description="Issuer does not match expected value",
+                        severity="high",
+                        data={
+                            "expected": metadata["expected_issuer"],
+                            "actual": metadata["actual_issuer"],
+                        },
+                    )
+                )
 
         return signals
 
@@ -63,24 +67,28 @@ class FraudRuleEngine:
 
         # Check for excessive verifications
         if len(history) > 100:
-            signals.append(FraudSignal(
-                type="excessive_verifications",
-                confidence=0.6,
-                description=f"High verification count: {len(history)}",
-                severity="medium",
-                data={"count": len(history)},
-            ))
+            signals.append(
+                FraudSignal(
+                    type="excessive_verifications",
+                    confidence=0.6,
+                    description=f"High verification count: {len(history)}",
+                    severity="medium",
+                    data={"count": len(history)},
+                )
+            )
 
         # Check for multiple failures
         failures = sum(1 for v in history if v.get("success") is False)
         if failures > len(history) * 0.5 and len(history) > 10:
-            signals.append(FraudSignal(
-                type="high_verification_failure",
-                confidence=0.7,
-                description=f"High verification failure rate: {failures}/{len(history)}",
-                severity="medium",
-                data={"failures": failures, "total": len(history)},
-            ))
+            signals.append(
+                FraudSignal(
+                    type="high_verification_failure",
+                    confidence=0.7,
+                    description=f"High verification failure rate: {failures}/{len(history)}",
+                    severity="medium",
+                    data={"failures": failures, "total": len(history)},
+                )
+            )
 
         return signals
 
@@ -92,13 +100,15 @@ class FraudRuleEngine:
         # Check for duplicate fingerprints
         unique = set(fingerprints)
         if len(unique) < len(fingerprints):
-            signals.append(FraudSignal(
-                type="duplicate_fingerprints",
-                confidence=0.9,
-                description="Duplicate fingerprints detected",
-                severity="critical",
-                data={"count": len(fingerprints) - len(unique)},
-            ))
+            signals.append(
+                FraudSignal(
+                    type="duplicate_fingerprints",
+                    confidence=0.9,
+                    description="Duplicate fingerprints detected",
+                    severity="critical",
+                    data={"count": len(fingerprints) - len(unique)},
+                )
+            )
 
         return signals
 

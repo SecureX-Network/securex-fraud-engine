@@ -3,8 +3,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def test_settings_import():
@@ -17,13 +16,14 @@ def test_settings_import():
     assert isinstance(settings.LOG_LEVEL, str)
 
 
-def test_environment_defaults():
+def test_environment_defaults(monkeypatch):
     """Test that default configuration values are sensible."""
-    import os
-    os.environ.pop("API_PORT", None)
-    os.environ.pop("API_HOST", None)
+    monkeypatch.delenv("API_PORT", raising=False)
+    monkeypatch.delenv("API_HOST", raising=False)
+    monkeypatch.delenv("DEBUG", raising=False)
 
     from src.config.settings import get_settings
+
     settings = get_settings()
 
     assert settings.API_HOST == "0.0.0.0"

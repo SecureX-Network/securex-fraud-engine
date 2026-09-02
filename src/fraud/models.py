@@ -7,6 +7,7 @@ from typing import Any
 @dataclass
 class FraudContext:
     """Context for fraud analysis."""
+
     credential_id: str
     credential_type: str
     issuer_id: str
@@ -27,6 +28,7 @@ class FraudContext:
 @dataclass
 class FraudSignal:
     """A single fraud detection signal."""
+
     type: str
     confidence: float = 0.0
     description: str = ""
@@ -37,6 +39,7 @@ class FraudSignal:
 @dataclass
 class FraudAnalysisResult:
     """Result of fraud analysis."""
+
     credential_id: str
     is_suspicious: bool
     fraud_score: float

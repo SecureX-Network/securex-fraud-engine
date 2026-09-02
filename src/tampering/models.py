@@ -6,6 +6,7 @@ from dataclasses import dataclass
 @dataclass
 class TamperingIndicator:
     """A single tampering indicator."""
+
     type: str
     confidence: float = 0.0
     description: str = ""
@@ -15,6 +16,7 @@ class TamperingIndicator:
 @dataclass
 class TamperingResult:
     """Result of tampering analysis."""
+
     document_id: str
     is_tampered: bool
     tampering_score: float

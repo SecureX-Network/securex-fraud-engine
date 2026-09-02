@@ -9,6 +9,7 @@ from .models import RiskFactor, RiskResult
 @dataclass
 class RiskContext:
     """Context for risk analysis."""
+
     entity_type: str
     entity_id: str
     context: dict[str, Any]
