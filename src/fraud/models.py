@@ -45,3 +45,7 @@ class FraudAnalysisResult:
     fraud_score: float
     signals: list[FraudSignal]
     recommendation: str
+    confidence: float = 0.0
+    severity: str = "low"
+    explanation: str = ""
+    analysis_id: str | None = None

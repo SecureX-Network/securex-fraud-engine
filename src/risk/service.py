@@ -1,9 +1,11 @@
-"""Risk Analysis Service"""
+"""Risk Analysis Service (V1 + V2)."""
 
 from dataclasses import dataclass
 from typing import Any
 
 from .models import RiskFactor, RiskResult
+
+SEVERITY_LEVELS = ["low", "medium", "high", "critical"]
 
 
 @dataclass
@@ -27,10 +29,10 @@ class RiskAnalysisService:
         ]
 
     def analyze(self, context: RiskContext) -> RiskResult:
-        """Calculate risk score based on context."""
+        """Calculate risk score based on context (deterministic)."""
         factors = []
-        total_weight = 0.0
         weighted_sum = 0.0
+        total_weight = 0.0
 
         for factor_fn in self.risk_factors:
             factor = factor_fn(context)
@@ -42,17 +44,22 @@ class RiskAnalysisService:
         risk_score = min(weighted_sum, 1.0) if total_weight > 0 else 0.1
         risk_level = self._get_risk_level(risk_score)
 
-        return RiskResult(
+        result = RiskResult(
             entity_type=context.entity_type,
             entity_id=context.entity_id,
-            risk_score=risk_score,
+            risk_score=round(risk_score, 4),
             risk_level=risk_level,
             factors=factors,
             explanation=self._generate_explanation(factors),
         )
 
+        # V2 fields
+        result.severity = risk_level
+        result.evidence = self._collect_evidence(factors)
+        result.recommendation = self._get_recommendation(risk_level)
+        return result
+
     def _entity_age_factor(self, context: RiskContext) -> RiskFactor | None:
-        """Evaluate entity age as a risk factor."""
         if "entity_age_days" not in context.context:
             return None
 
@@ -64,11 +71,11 @@ class RiskAnalysisService:
                 value=0.8,
                 contribution=0.4,
                 description="Entity is less than 7 days old",
+                evidence=["entity_age_days < 7"],
             )
         return None
 
     def _historical_behavior_factor(self, context: RiskContext) -> RiskFactor | None:
-        """Evaluate historical behavior as a risk factor."""
         if "historical_risk_score" not in context.context:
             return None
 
@@ -80,10 +87,10 @@ class RiskAnalysisService:
             value=factor_value,
             contribution=factor_value * 0.7,
             description=f"Historical risk score: {hist_score}",
+            evidence=["historical_risk_score present"],
         )
 
     def _signal_analysis_factor(self, context: RiskContext) -> RiskFactor | None:
-        """Evaluate signals as a risk factor."""
         if not context.signals:
             return None
 
@@ -95,10 +102,10 @@ class RiskAnalysisService:
             value=factor_value,
             contribution=factor_value * 0.5,
             description=f"{high_risk} high-risk signals out of {len(context.signals)}",
+            evidence=[f"{high_risk}/{len(context.signals)} high-risk signals"],
         )
 
     def _get_risk_level(self, risk_score: float) -> str:
-        """Get risk level from score."""
         if risk_score >= 0.8:
             return "critical"
         elif risk_score >= 0.6:
@@ -109,8 +116,24 @@ class RiskAnalysisService:
             return "low"
 
     def _generate_explanation(self, factors: list[RiskFactor]) -> str:
-        """Generate explanation of risk assessment."""
         if not factors:
             return "No risk factors identified; default low risk assigned."
         factor_names = [f.factor_name for f in factors]
         return f"Risk analysis based on: {', '.join(factor_names)}"
+
+    def _collect_evidence(self, factors: list[RiskFactor]) -> list[str]:
+        evidence: list[str] = []
+        for f in factors:
+            evidence.extend(f.evidence)
+        if not evidence:
+            return ["no contributing factors"]
+        return evidence
+
+    def _get_recommendation(self, risk_level: str) -> str:
+        mapping = {
+            "critical": "BLOCK - Immediate action required",
+            "high": "REVIEW - High risk, manual review recommended",
+            "medium": "MONITOR - Moderate risk, monitor activity",
+            "low": "ACCEPT - Low risk",
+        }
+        return mapping[risk_level]

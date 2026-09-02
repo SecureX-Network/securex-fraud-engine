@@ -9,8 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .api import api_router
+from .api.v2 import v2_router
 from .config.settings import get_settings
-from .core.exceptions import SecureXError
+from .core.exceptions import AuthenticationError, SecureXError
+from .core.version import APP_VERSION
 
 # Configure logging
 logging.basicConfig(
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     settings = get_settings()
-    logger.info("Starting SecureX Fraud Engine v0.1.0")
+    logger.info("Starting SecureX Fraud Engine v2.0.0 (V1 preserved)")
     logger.info(f"Debug mode: {settings.DEBUG}")
     yield
     logger.info("Shutting down SecureX Fraud Engine")
@@ -37,7 +39,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="SecureX Fraud Engine",
         description="Blockchain-Powered Digital Credential Trust Network - Fraud Detection & Analysis Engine",
-        version="0.1.0",
+        version=APP_VERSION,
         lifespan=lifespan,
         docs_url="/docs" if settings.DEBUG else None,
         redoc_url="/redoc" if settings.DEBUG else None,
@@ -69,8 +71,16 @@ def create_app() -> FastAPI:
             content=exc.to_dict(),
         )
 
+    @app.exception_handler(AuthenticationError)
+    async def auth_error_handler(request: Request, exc: AuthenticationError):
+        return JSONResponse(
+            status_code=401,
+            content=exc.to_dict(),
+        )
+
     # Include API router
     app.include_router(api_router)
+    app.include_router(v2_router)
 
     return app
 

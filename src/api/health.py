@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from src.core.version import APP_NAME, APP_VERSION
+
 router = APIRouter()
 
 
@@ -23,8 +25,8 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         timestamp=datetime.now(timezone.utc).isoformat(),
-        version="0.1.0",
-        service="securex-fraud-engine",
+        version=APP_VERSION,
+        service=APP_NAME,
     )
 
 

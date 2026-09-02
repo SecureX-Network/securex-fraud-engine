@@ -50,6 +50,22 @@ class Settings(BaseSettings):
     RISK_HIGH_THRESHOLD: float = Field(default=0.8, description="High risk threshold")
     RISK_MEDIUM_THRESHOLD: float = Field(default=0.5, description="Medium risk threshold")
 
+    # V2 Authentication
+    ENABLE_AUTH: bool = Field(default=True, description="Enable API authentication")
+    # Comma-separated list of accepted API keys (V2 only). Empty disables key auth.
+    API_KEYS: str = Field(default="", description="Comma-separated accepted API keys")
+    # Credential consistency fields that may be required for comparison
+    REQUIRED_CREDENTIAL_FIELDS: list[str] = Field(
+        default=["credential_id", "issuer_id", "credential_type"],
+        description="Fields required for credential consistency analysis",
+    )
+
+    # Blockchain verification timeout (seconds)
+    BLOCKCHAIN_TIMEOUT_SECONDS: float = Field(default=5.0, description="Blockchain request timeout")
+    BLOCKCHAIN_VERIFY_MODE: str = Field(
+        default="unavailable", description="mock|live|unavailable"
+    )
+
 
 def get_settings() -> Settings:
     """Get application settings."""

@@ -1,0 +1,1 @@
+"""Blockchain evidence provider interface."""

@@ -1,58 +1,78 @@
-# SecureX Fraud Engine
+# SecureX Fraud Engine (V2)
 
-Blockchain-Powered Digital Credential Trust Network — backend fraud, risk, document tampering, credential fingerprinting, and AI/security analysis engine.
+Blockchain-Powered Digital Credential Trust Network — backend fraud, risk,
+document integrity, tampering detection, credential fingerprinting, and
+blockchain evidence analysis engine.
+
+> **Status:** V2 implemented. V1 APIs fully preserved. Some capabilities are
+> honestly documented as **PLANNED** (real OCR, PostgreSQL, production ML).
 
 ## Purpose
 
-This repository contains the backend analysis engine for SecureX. It provides fraud detection, risk scoring, document tampering detection, and credential fingerprinting as modular services exposed through a clean HTTP API.
+Backend analysis engine for SecureX. Provides fraud detection, risk scoring,
+document tampering detection, credential fingerprinting, document-integrity
+analysis, and blockchain evidence verification as modular services exposed
+through a clean HTTP API.
 
-It is NOT a frontend repository. The frontend lives in [securex-platform](https://github.com/SecureX-Network/securex-platform). The blockchain lives in [securex-blockchain](https://github.com/SecureX-Network/securex-blockchain).
+It is **not** a frontend repository. The frontend lives in
+[securex-platform](https://github.com/SecureX-Network/securex-platform). The
+blockchain lives in [securex-blockchain](https://github.com/SecureX-Network/securex-blockchain).
+
+## V1 vs V2
+
+- **V1** is fully preserved (same endpoints, same request/response contracts).
+- **V2** adds an authenticated `/api/v2/*` boundary, document analysis,
+  tampering structure/content analysis, credential consistency, blockchain
+  evidence integration, unified durable analyses, and richer fingerprinting.
 
 ## Architecture
 
 ```
-securex-platform
-        │
-        │ API request
-        ▼
-securex-fraud-engine (this repo)
-        │
-        ├── Fraud Analysis
-        ├── Risk Analysis
-        ├── Tampering Detection
-        └── Fingerprinting
-        │
-        ▼
-Structured Security Result
-        │
-        ▼
-securex-platform
-        │
-        ▼
-Frontend
+              ┌─────────────────────┐
+              │ SecureX Fraud Engine│
+              │        V2           │
+              └──────────┬──────────┘
+       ┌─────────────────┼─────────────────┐
+       ▼                 ▼                 ▼
+   Fraud Engine      Risk Engine      Document Engine
+       │                 │                 │
+       │                 │          ┌──────┴──────┐
+       │                 │          ▼             ▼
+       │                 │        OCR        Tampering
+       └─────────────────┼─────────────────┘
+                         ▼
+                  Evidence Aggregator
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+      SecureX Blockchain        PostgreSQL (planned)
+                                   (in-memory dev now)
 ```
 
-The fraud engine communicates with the platform through well-defined APIs/contracts and does not couple itself to the frontend.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
 
 ## Project Structure
 
 ```
 src/
-├── api/          # FastAPI route definitions
-├── core/         # Shared exceptions and utilities
-├── fraud/        # Fraud detection service and rules
-├── risk/         # Risk analysis service
-├── tampering/    # Document tampering detection
-├── fingerprint/  # Credential fingerprinting
-├── models/       # Data models (planned)
-├── services/     # Shared services (planned)
-├── security/     # Security utilities (planned)
-├── config/       # Environment configuration
-└── main.py       # Application entry point
+├── api/            # FastAPI route definitions (V1 + V2 routers)
+├── core/           # Shared exceptions and utilities
+├── fraud/          # Fraud detection service and rules
+├── risk/           # Risk analysis service
+├── tampering/      # Document tampering detection (+ structure analysis)
+├── fingerprint/    # Credential fingerprinting
+├── documents/      # Validation, metadata, text extraction, OCR
+├── credential/     # Credential consistency analysis
+├── blockchain/     # Client, adapter, verification (evidence)
+├── persistence/    # Repository interfaces + in-memory dev repo
+├── security/       # Authentication, authorization, file security, audit
+├── models/         # ML model interfaces (PLANNED)
+├── services/       # Shared services
+├── config/         # Environment configuration
+└── main.py         # Application entry point
 
-tests/            # Pytest test suite
-docs/             # Architecture and design docs
-scripts/          # Utility scripts (planned)
+tests/              # Pytest test suite (V1 + V2)
+docs/               # Architecture and design docs
 ```
 
 ## Technology Stack
@@ -61,7 +81,9 @@ scripts/          # Utility scripts (planned)
 - **FastAPI** for the HTTP API
 - **Pydantic / pydantic-settings** for validation and configuration
 - **pytest** for testing
-- SHA-2 family via Python's `hashlib` for fingerprinting
+- **httpx** for the blockchain client
+- **python-multipart** for secure document uploads
+- SHA-2 family via `hashlib` for fingerprinting
 
 ## Local Setup
 
@@ -74,11 +96,9 @@ scripts/          # Utility scripts (planned)
 ```bash
 cd $HOME/ctn-fraud-engine
 
-# Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
@@ -88,11 +108,9 @@ pip install -r requirements-dev.txt
 ```powershell
 cd $HOME\ctn-fraud-engine
 
-# Create virtual environment
 python -m venv .venv
 .venv\Scripts\activate
 
-# Install dependencies
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
@@ -109,13 +127,15 @@ Key settings:
 
 | Variable | Purpose |
 |----------|---------|
-| `API_HOST` | Host to bind the API |
-| `API_PORT` | Port to serve the API |
-| `SECRET_KEY` | Secret used for signing |
+| `API_HOST` / `API_PORT` | Bind host / port |
+| `SECRET_KEY` | Signing secret |
+| `ENABLE_AUTH` | Toggle V2 API-key auth (default `true`) |
+| `API_KEYS` | Comma-separated accepted API keys for V2 |
+| `SECUREX_BLOCKCHAIN_URL` | Blockchain evidence endpoint |
+| `BLOCKCHAIN_VERIFY_MODE` | `mock` \| `live` \| `unavailable` |
+| `MAX_UPLOAD_SIZE_MB` | Document upload limit |
+| `DATABASE_URL` | PostgreSQL (PLANNED) |
 | `LOG_LEVEL` | Logging verbosity |
-| `DATABASE_URL` | Optional PostgreSQL connection |
-| `SECUREX_PLATFORM_URL` | Optional platform integration |
-| `SECUREX_BLOCKCHAIN_URL` | Optional blockchain integration |
 
 Never commit `.env` files containing real credentials.
 
@@ -129,50 +149,92 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Running Tests
-
-```bash
-# Full test suite
-pytest
-
-# With coverage report
-pytest --cov=src --cov-report=term-missing
-```
-
 ## API Overview
+
+### V1 (preserved, unauthenticated)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
 | GET | `/ready` | Readiness check |
-| POST | `/api/v1/fraud/analyze` | Analyze credential for fraud indicators |
-| POST | `/api/v1/risk/score` | Calculate risk score for an entity |
-| POST | `/api/v1/tampering/analyze` | Analyze document for tampering |
-| POST | `/api/v1/fingerprint/create` | Create a credential fingerprint |
-| POST | `/api/v1/fingerprint/verify` | Verify credential against a fingerprint |
+| POST | `/api/v1/fraud/analyze` | Fraud analysis |
+| POST | `/api/v1/risk/score` | Risk score |
+| POST | `/api/v1/tampering/analyze` | Tampering analysis |
+| POST | `/api/v1/fingerprint/create` | Create fingerprint |
+| POST | `/api/v1/fingerprint/verify` | Verify fingerprint |
 
-Every response includes a `request_id` for correlation. Every request is validated with structured schemas.
+### V2 (authenticated with `X-API-Key`)
 
-## Development Workflow
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v2/fraud/analyze` | Unified fraud analysis |
+| POST | `/api/v2/risk/score` | Risk score with evidence |
+| POST | `/api/v2/documents/analyze` | Secure document pipeline |
+| POST | `/api/v2/tampering/analyze` | Tampering with structure/consistency |
+| POST | `/api/v2/fingerprint/create` | Fingerprint (bytes/structured/typed) |
+| POST | `/api/v2/fingerprint/verify` | Verify fingerprint (constant-time) |
+| POST | `/api/v2/blockchain/verify` | Blockchain evidence verification |
+| POST | `/api/v2/analysis` | Run unified analysis → `analysis_id` |
+| GET | `/api/v2/analysis/{id}` | Retrieve analysis |
+| GET | `/api/v2/analysis/{id}/evidence` | Retrieve evidence references |
 
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Implement changes following existing patterns
-3. Write tests for new behavior
-4. Run `pytest` to verify
-5. Run `ruff check src tests` to lint
-6. Commit with a clear message
-7. Open a pull request
+Every response includes a `request_id` and structured validation. V2 responses
+include `explanation`, deterministic `confidence`, and `severity`.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+## Authentication
+
+V2 endpoints require an API key sent via the `X-API-Key` header (configurable
+via `API_KEY_HEADER`). Accepted keys come from `API_KEYS`. Constant-time
+comparison prevents timing attacks. For local development without auth, set
+`ENABLE_AUTH=false` — but keep it enabled in production.
+
+```bash
+curl -X POST /api/v2/fraud/analyze \
+  -H "X-API-Key: your-key" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+## Testing
+
+```bash
+# Full test suite (V1 + V2)
+pytest
+
+# With coverage report
+pytest --cov=src --cov-report=term-missing
+
+# Lint
+ruff check src tests
+```
 
 ## Security Notes
 
-- No secrets are committed to this repository
-- All configuration comes from environment variables
-- Fingerprinting uses established cryptographic primitives (SHA-256/384/512)
-- Constant-time string comparison prevents timing attacks
-- Input validation is performed on all API requests
-- No arbitrary code execution or unsafe shell commands
+- API-key authentication for the V2 boundary (constant-time comparison).
+- Path-traversal and unsafe-filename rejection.
+- Magic-byte format validation and upload size limits.
+- Uploaded documents are processed in memory / temporary files; never executed,
+  never permanently stored by default.
+- No arbitrary shell commands, no user-supplied URL fetching, no SSRF from user
+  input.
+- Secret redaction in logs; secrets never committed.
+- Deterministic scoring only — no fabricated ML confidence.
+- Constant-time fingerprint comparison.
+
+## Privacy
+
+SecureX follows data minimization (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+Fingerprints never contain PII; persistence stores analysis data only.
+
+## Current Capability Status
+
+- **IMPLEMENTED:** V1 + V2 APIs, document validation/metadata/extraction,
+  tampering (hash/metadata/structure/consistency), fingerprinting (bytes/
+  structured/typed), fraud/risk aggregation, blockchain adapter + mock,
+  unified analyses, API-key auth, audit model, in-memory persistence.
+- **PARTIALLY IMPLEMENTED:** PDF structural/text extraction is conservative;
+  blockchain requires a live endpoint for `live` mode.
+- **PLANNED:** Real OCR provider, PostgreSQL persistence, production ML models.
 
 ## Repositories
 
