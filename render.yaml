@@ -1,0 +1,33 @@
+# SecureX Fraud Engine - Render Blueprint
+#
+# FastAPI service (Python) deployed as a PUBLIC web service on the free plan.
+# Free web services cannot RECEIVE private-network traffic, so the platform API
+# reaches this service via its public *.onrender.com URL; the URL is filled in
+# on the securex-api service after creation (see ctn-platform
+# docs/deployment-render.md). V2 routes are protected by X-API-Key (API_KEYS).
+#
+# Render proxies inbound traffic to $PORT (10000); uvicorn binds $PORT, falling
+# back to the service default (8000) outside Render.
+
+services:
+  - type: web
+    name: securex-fraud-engine
+    repo: https://github.com/SecureX-Network/securex-fraud-engine
+    runtime: python
+    branch: main
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port "${PORT:-8000}"
+    healthCheckPath: /ready
+    envVars:
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENABLE_AUTH
+        value: "true"
+      - key: API_KEYS
+        generateValue: true
